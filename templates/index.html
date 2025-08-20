@@ -1,21 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="hero-section text-center py-5 mb-5">
+<!-- Ultra-Modern Hero Section -->
+<div class="hero-section text-center">
     <div class="hero-content">
-        <h1 class="display-4 fw-bold text-primary mb-3">
-            <i class="fas fa-code me-3"></i>Welcome to Nexus
+        <h1 class="hero-title">
+            <i class="fas fa-rocket me-3"></i>Bem-vindo ao Nexus
         </h1>
-        <p class="lead text-muted mb-4">
-            The professional network where developers showcase their projects, share knowledge, and build connections.
+        <p class="hero-subtitle">
+            A rede profissional onde desenvolvedores exibem seus projetos, compartilham conhecimento e constroem conexões significativas.
         </p>
         {% if not current_user.is_authenticated %}
         <div class="hero-actions">
             <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
-                <i class="fas fa-user-plus me-2"></i>Join Now
+                <i class="fas fa-rocket me-2"></i>Começar Agora
             </a>
-            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
-                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Fazer Login
+            </a>
+        </div>
+        {% else %}
+        <div class="hero-actions">
+            <a href="{{ url_for('create_project') }}" class="btn btn-light btn-lg me-3">
+                <i class="fas fa-plus me-2"></i>Criar Projeto
+            </a>
+            <a href="{{ url_for('feed') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-stream me-2"></i>Ver Feed
             </a>
         </div>
         {% endif %}
@@ -26,8 +36,8 @@
 {% if popular_projects %}
 <section class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary">
-            <i class="fas fa-fire me-2"></i>Popular Projects
+        <h2 class="section-header">
+            <i class="fas fa-fire"></i>Projetos Populares
         </h2>
     </div>
     
@@ -46,16 +56,25 @@
                 
                 <div class="card-body">
                     <h5 class="card-title">{{ project.title }}</h5>
-                    <p class="card-text text-muted">{{ project.description[:100] }}...</p>
+                    <p class="card-text text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</p>
                     
                     <div class="project-meta d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            by <a href="{{ url_for('profile', username=project.author.username) }}" class="text-decoration-none">
+                        <small class="text-muted d-flex align-items-center">
+                            por 
+                            {% if project.author.profile_image %}
+                            <img src="{{ url_for('uploaded_file', filename=project.author.profile_image) }}" 
+                                 class="profile-image-sm ms-1 me-1" alt="Profile">
+                            {% else %}
+                            <div class="profile-image-sm ms-1 me-1 d-flex align-items-center justify-content-center bg-gradient-primary text-white">
+                                {{ project.author.username[0].upper() }}
+                            </div>
+                            {% endif %}
+                            <a href="{{ url_for('profile', username=project.author.username) }}" class="text-decoration-none fw-medium">
                                 {{ project.author.username }}
                             </a>
                         </small>
                         <div class="project-stats">
-                            <span class="badge bg-primary me-2">
+                            <span class="badge badge-primary">
                                 <i class="fas fa-heart me-1"></i>{{ project.get_like_count() }}
                             </span>
                         </div>
@@ -64,7 +83,7 @@
                 
                 <div class="card-footer bg-transparent">
                     <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-outline-primary btn-sm w-100">
-                        <i class="fas fa-eye me-1"></i>View Project
+                        <i class="fas fa-eye me-1"></i>Ver Projeto
                     </a>
                 </div>
             </div>
@@ -77,8 +96,8 @@
 <!-- Recent Projects Section -->
 <section>
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary">
-            <i class="fas fa-clock me-2"></i>Recent Projects
+        <h2 class="section-header">
+            <i class="fas fa-clock"></i>Projetos Recentes
         </h2>
     </div>
     
@@ -98,27 +117,36 @@
                 
                 <div class="card-body">
                     <h5 class="card-title">{{ project.title }}</h5>
-                    <p class="card-text text-muted">{{ project.description[:100] }}...</p>
+                    <p class="card-text text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</p>
                     
                     {% if project.get_tags_list() %}
                     <div class="project-tags mb-2">
                         {% for tag in project.get_tags_list()[:3] %}
-                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        <span class="badge badge-secondary me-1">{{ tag }}</span>
                         {% endfor %}
                     </div>
                     {% endif %}
                     
                     <div class="project-meta d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            by <a href="{{ url_for('profile', username=project.author.username) }}" class="text-decoration-none">
+                        <small class="text-muted d-flex align-items-center">
+                            por 
+                            {% if project.author.profile_image %}
+                            <img src="{{ url_for('uploaded_file', filename=project.author.profile_image) }}" 
+                                 class="profile-image-sm ms-1 me-1" alt="Profile">
+                            {% else %}
+                            <div class="profile-image-sm ms-1 me-1 d-flex align-items-center justify-content-center bg-gradient-primary text-white">
+                                {{ project.author.username[0].upper() }}
+                            </div>
+                            {% endif %}
+                            <a href="{{ url_for('profile', username=project.author.username) }}" class="text-decoration-none fw-medium">
                                 {{ project.author.username }}
                             </a>
                         </small>
                         <div class="project-stats">
-                            <span class="badge bg-primary me-1">
+                            <span class="badge badge-primary me-1">
                                 <i class="fas fa-heart me-1"></i>{{ project.get_like_count() }}
                             </span>
-                            <span class="badge bg-info">
+                            <span class="badge badge-secondary">
                                 <i class="fas fa-comment me-1"></i>{{ project.get_comment_count() }}
                             </span>
                         </div>
@@ -127,7 +155,7 @@
                 
                 <div class="card-footer bg-transparent">
                     <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-outline-primary btn-sm w-100">
-                        <i class="fas fa-eye me-1"></i>View Project
+                        <i class="fas fa-eye me-1"></i>Ver Projeto
                     </a>
                 </div>
             </div>
@@ -141,7 +169,9 @@
         <ul class="pagination justify-content-center">
             {% if projects.has_prev %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=projects.prev_num) }}">Previous</a>
+                <a class="page-link" href="{{ url_for('index', page=projects.prev_num) }}">
+                    <i class="fas fa-chevron-left me-1"></i>Anterior
+                </a>
             </li>
             {% endif %}
             
@@ -165,7 +195,9 @@
             
             {% if projects.has_next %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=projects.next_num) }}">Next</a>
+                <a class="page-link" href="{{ url_for('index', page=projects.next_num) }}">
+                    Próximo<i class="fas fa-chevron-right ms-1"></i>
+                </a>
             </li>
             {% endif %}
         </ul>
@@ -174,12 +206,18 @@
     
     {% else %}
     <div class="text-center py-5">
-        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
-        <h4 class="text-muted">No projects yet</h4>
-        <p class="text-muted">Be the first to share your amazing project!</p>
+        <div class="mb-4">
+            <i class="fas fa-folder-open fa-4x text-muted"></i>
+        </div>
+        <h4 class="text-muted mb-3">Nenhum projeto ainda</h4>
+        <p class="text-muted mb-4">Seja o primeiro a compartilhar seu projeto incrível!</p>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('create_project') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Create Project
+        <a href="{{ url_for('create_project') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Criar Projeto
+        </a>
+        {% else %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Junte-se ao Nexus
         </a>
         {% endif %}
     </div>

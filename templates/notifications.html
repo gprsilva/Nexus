@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="notifications-header mb-4">
+    <h2 class="text-primary">
+        <i class="fas fa-bell me-2"></i>Notifications
+    </h2>
+    <p class="text-muted">Stay updated with your latest interactions</p>
+</div>
+
+{% if notifications.items %}
+<div class="notifications-list">
+    {% for notification in notifications.items %}
+    <div class="card notification-card mb-3 {% if not notification.read %}notification-unread{% endif %}">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <!-- Notification Icon -->
+                <div class="notification-icon me-3">
+                    {% if notification.type == 'like' %}
+                    <div class="notification-icon-circle bg-danger">
+                        <i class="fas fa-heart text-white"></i>
+                    </div>
+                    {% elif notification.type == 'comment' %}
+                    <div class="notification-icon-circle bg-info">
+                        <i class="fas fa-comment text-white"></i>
+                    </div>
+                    {% elif notification.type == 'follow' %}
+                    <div class="notification-icon-circle bg-success">
+                        <i class="fas fa-user-plus text-white"></i>
+                    </div>
+                    {% else %}
+                    <div class="notification-icon-circle bg-primary">
+                        <i class="fas fa-bell text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Notification Content -->
+                <div class="notification-content flex-grow-1">
+                    <div class="notification-message">
+                        {% if notification.related_user %}
+                        <a href="{{ url_for('profile', username=notification.related_user.username) }}" 
+                           class="text-decoration-none fw-semibold">
+                            {{ notification.related_user.username }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if notification.type == 'like' and notification.project %}
+                        liked your project 
+                        <a href="{{ url_for('project_detail', id=notification.project.id) }}" 
+                           class="text-decoration-none">{{ notification.project.title }}</a>
+                        {% elif notification.type == 'comment' and notification.project %}
+                        commented on your project 
+                        <a href="{{ url_for('project_detail', id=notification.project.id) }}" 
+                           class="text-decoration-none">{{ notification.project.title }}</a>
+                        {% elif notification.type == 'follow' %}
+                        started following you
+                        {% else %}
+                        {{ notification.message }}
+                        {% endif %}
+                    </div>
+                    
+                    <small class="text-muted">{{ notification.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+                
+                <!-- Notification Actions -->
+                {% if notification.project %}
+                <div class="notification-actions">
+                    <a href="{{ url_for('project_detail', id=notification.project.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        View Project
+                    </a>
+                </div>
+                {% elif notification.type == 'follow' and notification.related_user %}
+                <div class="notification-actions">
+                    <a href="{{ url_for('profile', username=notification.related_user.username) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        View Profile
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if notifications.pages > 1 %}
+<nav aria-label="Notifications pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if notifications.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('notifications', page=notifications.prev_num) }}">Previous</a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in notifications.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != notifications.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('notifications', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if notifications.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('notifications', page=notifications.next_num) }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">No Notifications</h4>
+    <p class="text-muted">You're all caught up! New notifications will appear here when other users interact with your projects.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home me-2"></i>Back to Home
+    </a>
+</div>
+{% endif %}
+{% endblock %}

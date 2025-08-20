@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                </h3>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Profile Image -->
+                    <div class="text-center mb-4">
+                        {% if current_user.profile_image %}
+                        <img src="{{ url_for('uploaded_file', filename=current_user.profile_image) }}" 
+                             class="profile-avatar-edit rounded-circle mb-3" alt="Profile">
+                        {% else %}
+                        <div class="profile-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            {{ form.profile_image.label(class="form-label") }}
+                            {{ form.profile_image(class="form-control" + (" is-invalid" if form.profile_image.errors else "")) }}
+                            {% if form.profile_image.errors %}
+                                {% for error in form.profile_image.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Basic Information -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.first_name.label(class="form-label") }}
+                            {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                            {% if form.first_name.errors %}
+                                {% for error in form.first_name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.last_name.label(class="form-label") }}
+                            {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                            {% if form.last_name.errors %}
+                                {% for error in form.last_name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                        {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.bio.label(class="form-label") }}
+                        {{ form.bio(class="form-control" + (" is-invalid" if form.bio.errors else ""), rows="3") }}
+                        {% if form.bio.errors %}
+                            {% for error in form.bio.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="form-text">Tell other developers about yourself.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.location.label(class="form-label") }}
+                        {{ form.location(class="form-control" + (" is-invalid" if form.location.errors else "")) }}
+                        {% if form.location.errors %}
+                            {% for error in form.location.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Social Links -->
+                    <h5 class="text-primary mb-3 mt-4">Social Links</h5>
+                    
+                    <div class="mb-3">
+                        {{ form.website.label(class="form-label") }}
+                        {{ form.website(class="form-control" + (" is-invalid" if form.website.errors else "")) }}
+                        {% if form.website.errors %}
+                            {% for error in form.website.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.github_username.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">github.com/</span>
+                            {{ form.github_username(class="form-control" + (" is-invalid" if form.github_username.errors else "")) }}
+                        </div>
+                        {% if form.github_username.errors %}
+                            {% for error in form.github_username.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.linkedin_profile.label(class="form-label") }}
+                        {{ form.linkedin_profile(class="form-control" + (" is-invalid" if form.linkedin_profile.errors else "")) }}
+                        {% if form.linkedin_profile.errors %}
+                            {% for error in form.linkedin_profile.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

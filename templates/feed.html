@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="feed-header mb-4">
+    <h2 class="text-primary">
+        <i class="fas fa-stream me-2"></i>Your Feed
+    </h2>
+    <p class="text-muted">Latest projects from developers you follow</p>
+</div>
+
+{% if projects.items %}
+<div class="feed-content">
+    {% for project in projects.items %}
+    <div class="card feed-card mb-4">
+        <div class="card-body">
+            <!-- Author Info -->
+            <div class="d-flex align-items-center mb-3">
+                <div class="me-3">
+                    {% if project.author.profile_image %}
+                    <img src="{{ url_for('uploaded_file', filename=project.author.profile_image) }}" 
+                         class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-user text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">
+                        <a href="{{ url_for('profile', username=project.author.username) }}" 
+                           class="text-decoration-none">
+                            {{ project.author.get_full_name() }}
+                        </a>
+                    </div>
+                    <small class="text-muted">
+                        @{{ project.author.username }} • {{ project.created_at.strftime('%B %d, %Y') }}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Project Content -->
+            <div class="feed-project-content">
+                <h5 class="project-title mb-2">
+                    <a href="{{ url_for('project_detail', id=project.id) }}" class="text-decoration-none">
+                        {{ project.title }}
+                    </a>
+                </h5>
+                
+                <p class="project-description text-muted mb-3">{{ project.description }}</p>
+                
+                {% if project.get_tags_list() %}
+                <div class="project-tags mb-3">
+                    {% for tag in project.get_tags_list()[:5] %}
+                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if project.image %}
+                <div class="project-image mb-3">
+                    <a href="{{ url_for('project_detail', id=project.id) }}">
+                        <img src="{{ url_for('uploaded_file', filename=project.image) }}" 
+                             class="img-fluid rounded feed-project-image" alt="{{ project.title }}">
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Project Actions -->
+                <div class="project-actions d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-link btn-sm p-0 like-btn" data-project-id="{{ project.id }}"
+                                data-liked="{{ 'true' if project.is_liked_by(current_user) else 'false' }}">
+                            <i class="fas fa-heart me-1 {{ 'text-danger' if project.is_liked_by(current_user) else 'text-muted' }}"></i>
+                            <span class="like-count">{{ project.get_like_count() }}</span>
+                        </button>
+                        
+                        <a href="{{ url_for('project_detail', id=project.id) }}#comments-section" 
+                           class="btn btn-link btn-sm p-0 text-decoration-none">
+                            <i class="fas fa-comment me-1 text-muted"></i>{{ project.get_comment_count() }}
+                        </a>
+                        
+                        {% if project.github_link %}
+                        <a href="{{ project.github_link }}" target="_blank" 
+                           class="btn btn-link btn-sm p-0 text-decoration-none">
+                            <i class="fab fa-github me-1 text-muted"></i>Code
+                        </a>
+                        {% endif %}
+                        
+                        {% if project.demo_link %}
+                        <a href="{{ project.demo_link }}" target="_blank" 
+                           class="btn btn-link btn-sm p-0 text-decoration-none">
+                            <i class="fas fa-external-link-alt me-1 text-muted"></i>Demo
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ url_for('project_detail', id=project.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        View Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if projects.pages > 1 %}
+<nav aria-label="Feed pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if projects.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('feed', page=projects.prev_num) }}">Previous</a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in projects.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != projects.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('feed', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if projects.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('feed', page=projects.next_num) }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">Your Feed is Empty</h4>
+    <p class="text-muted">Start following other developers to see their latest projects here!</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-search me-2"></i>Discover Projects
+    </a>
+</div>
+{% endif %}
+{% endblock %}

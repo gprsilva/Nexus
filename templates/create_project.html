@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>{{ legend or 'Create New Project' }}
+                </h3>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Basic Information -->
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                        {% if form.title.errors %}
+                            {% for error in form.title.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3") }}
+                        {% if form.description.errors %}
+                            {% for error in form.description.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="form-text">A brief description of your project that will be visible in the project cards.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.content.label(class="form-label") }}
+                        {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="6") }}
+                        {% if form.content.errors %}
+                            {% for error in form.content.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="form-text">Detailed information about your project, technologies used, challenges faced, etc.</div>
+                    </div>
+                    
+                    <!-- Category and Tags -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.category.label(class="form-label") }}
+                            {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else "")) }}
+                            {% if form.category.errors %}
+                                {% for error in form.category.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.tags.label(class="form-label") }}
+                            {{ form.tags(class="form-control" + (" is-invalid" if form.tags.errors else "")) }}
+                            {% if form.tags.errors %}
+                                {% for error in form.tags.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text">e.g., Python, React, Machine Learning</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Links -->
+                    <h5 class="text-primary mb-3 mt-4">Project Links</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.github_link.label(class="form-label") }}
+                            {{ form.github_link(class="form-control" + (" is-invalid" if form.github_link.errors else "")) }}
+                            {% if form.github_link.errors %}
+                                {% for error in form.github_link.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.demo_link.label(class="form-label") }}
+                            {{ form.demo_link(class="form-control" + (" is-invalid" if form.demo_link.errors else "")) }}
+                            {% if form.demo_link.errors %}
+                                {% for error in form.demo_link.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Media Upload -->
+                    <h5 class="text-primary mb-3 mt-4">Media</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.image.label(class="form-label") }}
+                            {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
+                            {% if form.image.errors %}
+                                {% for error in form.image.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text">Upload a screenshot or image of your project</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.video.label(class="form-label") }}
+                            {{ form.video(class="form-control" + (" is-invalid" if form.video.errors else "")) }}
+                            {% if form.video.errors %}
+                                {% for error in form.video.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text">Upload a demo video of your project</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Publishing Options -->
+                    <div class="mb-4 mt-4">
+                        <div class="form-check">
+                            {{ form.is_published(class="form-check-input") }}
+                            {{ form.is_published.label(class="form-check-label") }}
+                        </div>
+                        <div class="form-text">If unchecked, your project will be saved as a draft and won't be visible to others.</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Project
+                        </button>
+                        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-header mb-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    {% if user.profile_image %}
+                    <img src="{{ url_for('uploaded_file', filename=user.profile_image) }}" 
+                         class="profile-avatar rounded-circle" alt="{{ user.username }}">
+                    {% else %}
+                    <div class="profile-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col">
+                    <h1 class="mb-1">{{ user.get_full_name() }}</h1>
+                    <h5 class="text-muted mb-2">@{{ user.username }}</h5>
+                    
+                    {% if user.bio %}
+                    <p class="text-muted mb-3">{{ user.bio }}</p>
+                    {% endif %}
+                    
+                    <div class="profile-info d-flex flex-wrap gap-3 mb-3">
+                        {% if user.location %}
+                        <span class="text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ user.location }}
+                        </span>
+                        {% endif %}
+                        
+                        {% if user.website %}
+                        <a href="{{ user.website }}" target="_blank" class="text-decoration-none">
+                            <i class="fas fa-link me-1"></i>Website
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.github_username %}
+                        <a href="https://github.com/{{ user.github_username }}" target="_blank" class="text-decoration-none">
+                            <i class="fab fa-github me-1"></i>GitHub
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.linkedin_profile %}
+                        <a href="{{ user.linkedin_profile }}" target="_blank" class="text-decoration-none">
+                            <i class="fab fa-linkedin me-1"></i>LinkedIn
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="profile-stats d-flex gap-4">
+                        <div>
+                            <strong>{{ user.get_project_count() }}</strong>
+                            <span class="text-muted">Projects</span>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('followers', username=user.username) }}" class="text-decoration-none">
+                                <strong>{{ user.get_follower_count() }}</strong>
+                                <span class="text-muted">Followers</span>
+                            </a>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('following', username=user.username) }}" class="text-decoration-none">
+                                <strong>{{ user.get_following_count() }}</strong>
+                                <span class="text-muted">Following</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-auto">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user == user %}
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>Edit Profile
+                        </a>
+                        {% else %}
+                            {% if current_user.is_following(user) %}
+                            <a href="{{ url_for('unfollow', username=user.username) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-user-minus me-1"></i>Unfollow
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('follow', username=user.username) }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i>Follow
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Section -->
+<div class="profile-projects">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary">
+            <i class="fas fa-code me-2"></i>Projects
+        </h3>
+        {% if current_user == user %}
+        <a href="{{ url_for('create_project') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>New Project
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if projects.items %}
+    <div class="row g-4">
+        {% for project in projects.items %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card project-card h-100">
+                {% if project.image %}
+                <img src="{{ url_for('uploaded_file', filename=project.image) }}" 
+                     class="card-img-top project-image" alt="{{ project.title }}">
+                {% else %}
+                <div class="card-img-top project-placeholder d-flex align-items-center justify-content-center">
+                    <i class="fas fa-code fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ project.title }}</h5>
+                    <p class="card-text text-muted">{{ project.description[:100] }}...</p>
+                    
+                    {% if project.get_tags_list() %}
+                    <div class="project-tags mb-2">
+                        {% for tag in project.get_tags_list()[:3] %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="project-stats d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary me-1">
+                                <i class="fas fa-heart me-1"></i>{{ project.get_like_count() }}
+                            </span>
+                            <span class="badge bg-info">
+                                <i class="fas fa-comment me-1"></i>{{ project.get_comment_count() }}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ project.created_at.strftime('%b %d, %Y') }}</small>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        {% if current_user == user %}
+                        <a href="{{ url_for('edit_project', id=project.id) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if projects.pages > 1 %}
+    <nav aria-label="Projects pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if projects.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('profile', username=user.username, page=projects.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in projects.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != projects.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('profile', username=user.username, page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if projects.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('profile', username=user.username, page=projects.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No projects yet</h4>
+        {% if current_user == user %}
+        <p class="text-muted">Start building your portfolio by creating your first project!</p>
+        <a href="{{ url_for('create_project') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Your First Project
+        </a>
+        {% else %}
+        <p class="text-muted">{{ user.username }} hasn't shared any projects yet.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

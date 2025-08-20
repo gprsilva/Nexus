@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="following-header mb-4">
+    <h2 class="text-primary">
+        <i class="fas fa-user-friends me-2"></i>Following
+    </h2>
+    <p class="text-muted">Developers that {{ user.get_full_name() }} is following</p>
+</div>
+
+{% if following_users.items %}
+<div class="row g-4">
+    {% for followed_user in following_users.items %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card user-card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    {% if followed_user.profile_image %}
+                    <img src="{{ url_for('uploaded_file', filename=followed_user.profile_image) }}" 
+                         class="rounded-circle user-avatar" alt="{{ followed_user.username }}">
+                    {% else %}
+                    <div class="user-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                        <i class="fas fa-user fa-2x text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h5 class="card-title">{{ followed_user.get_full_name() }}</h5>
+                <p class="text-muted">@{{ followed_user.username }}</p>
+                
+                {% if followed_user.bio %}
+                <p class="card-text">{{ followed_user.bio[:80] }}{% if followed_user.bio|length > 80 %}...{% endif %}</p>
+                {% endif %}
+                
+                <div class="user-stats mb-3">
+                    <small class="text-muted">
+                        {{ followed_user.get_project_count() }} Projects •
+                        {{ followed_user.get_follower_count() }} Followers
+                    </small>
+                </div>
+                
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('profile', username=followed_user.username) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        View Profile
+                    </a>
+                    
+                    {% if current_user.is_authenticated and current_user != followed_user %}
+                        {% if current_user.is_following(followed_user) %}
+                        <a href="{{ url_for('unfollow', username=followed_user.username) }}" 
+                           class="btn btn-outline-secondary btn-sm">Unfollow</a>
+                        {% else %}
+                        <a href="{{ url_for('follow', username=followed_user.username) }}" 
+                           class="btn btn-primary btn-sm">Follow</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if following_users.pages > 1 %}
+<nav aria-label="Following pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if following_users.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('following', username=user.username, page=following_users.prev_num) }}">Previous</a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in following_users.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != following_users.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('following', username=user.username, page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if following_users.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('following', username=user.username, page=following_users.next_num) }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-user-friends fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">Not Following Anyone</h4>
+    {% if current_user == user %}
+    <p class="text-muted">Discover other developers and start following them to see their projects in your feed!</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-search me-2"></i>Discover Developers
+    </a>
+    {% else %}
+    <p class="text-muted">{{ user.get_full_name() }} isn't following anyone yet.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

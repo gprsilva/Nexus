@@ -38,7 +38,7 @@ def login():
             if not next_page or url_parse(next_page).netloc != '':
                 next_page = url_for('index')
             return redirect(next_page)
-        flash('Invalid username or password', 'danger')
+        flash('Nome de usuário ou senha inválidos', 'danger')
     
     return render_template('login.html', form=form)
 
@@ -57,7 +57,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Registration successful!', 'success')
+        flash('Cadastro realizado com sucesso!', 'success')
         return redirect(url_for('login'))
     
     return render_template('register.html', form=form)
@@ -86,14 +86,14 @@ def edit_profile():
         if form.username.data != current_user.username:
             existing_user = User.query.filter_by(username=form.username.data).first()
             if existing_user:
-                flash('Username already taken. Please choose a different one.', 'danger')
+                flash('Nome de usuário já está sendo usado. Escolha outro.', 'danger')
                 return render_template('edit_profile.html', form=form)
         
         # Check if email is already taken by another user
         if form.email.data != current_user.email:
             existing_email = User.query.filter_by(email=form.email.data).first()
             if existing_email:
-                flash('Email already registered. Please choose a different one.', 'danger')
+                flash('Email já está cadastrado. Escolha outro.', 'danger')
                 return render_template('edit_profile.html', form=form)
         
         current_user.username = form.username.data
@@ -111,7 +111,7 @@ def edit_profile():
             current_user.profile_image = picture_file
         
         db.session.commit()
-        flash('Your profile has been updated!', 'success')
+        flash('Seu perfil foi atualizado!', 'success')
         return redirect(url_for('profile', username=current_user.username))
     
     elif request.method == 'GET':
@@ -143,42 +143,199 @@ def create_project():
         project.is_published = form.is_published.data
         project.user_id = current_user.id
         
+        # Handle file uploads
         if form.image.data:
-            picture_file = save_picture(form.image.data, 'project_images', (800, 600))
-            project.image = picture_file
+            try:
+                image_file = save_picture(form.image.data, 'projects', (800, 600))
+                project.image = image_file
+            except Exception as e:
+                flash('Erro ao fazer upload da imagem', 'danger')
         
         if form.video.data:
-            video_file = save_picture(form.video.data, 'project_videos')
-            project.video = video_file
+            try:
+                video_file = save_picture(form.video.data, 'videos')
+                project.video = video_file
+            except Exception as e:
+                flash('Erro ao fazer upload do vídeo', 'danger')
         
         db.session.add(project)
         db.session.commit()
-        
-        status = "published" if project.is_published else "saved as draft"
-        flash(f'Your project has been {status}!', 'success')
+        flash('Projeto criado com sucesso!', 'success')
         return redirect(url_for('project_detail', id=project.id))
     
-    return render_template('create_project.html', form=form, legend='New Project')
+    return render_template('create_project.html', form=form)
 
 @app.route('/project/<int:id>')
 def project_detail(id):
     project = Project.query.get_or_404(id)
-    
-    # Check if user can view this project
-    if not project.is_published and (not current_user.is_authenticated or project.author != current_user):
-        abort(403)
-    
     form = CommentForm()
+    
+    # Get comments
     comments = project.comments.order_by(Comment.created_at.desc()).all()
     
-    return render_template('project_detail.html', project=project, form=form, comments=comments)
+    # Check if current user liked this project
+    user_liked = False
+    if current_user.is_authenticated:
+        user_liked = project.is_liked_by(current_user)
+    
+    return render_template('project_detail.html', project=project, form=form, 
+                         comments=comments, user_liked=user_liked)
 
+# Like/Unlike functionality
+@app.route('/toggle_like/<int:project_id>', methods=['POST'])
+@login_required
+def toggle_like(project_id):
+    project = Project.query.get_or_404(project_id)
+    existing_like = Like.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+    
+    if existing_like:
+        db.session.delete(existing_like)
+        liked = False
+    else:
+        like = Like(user_id=current_user.id, project_id=project_id)
+        db.session.add(like)
+        liked = True
+        # Create notification
+        if project.user != current_user:
+            create_notification(
+                project.user, 'like', 
+                f'{current_user.display_name} curtiu seu projeto "{project.title}"',
+                related_user=current_user, project=project
+            )
+    
+    db.session.commit()
+    return jsonify({'liked': liked, 'like_count': project.get_like_count()})
+
+# Comment functionality  
+@app.route('/add_comment/<int:project_id>', methods=['POST'])
+@login_required
+def add_comment(project_id):
+    project = Project.query.get_or_404(project_id)
+    form = CommentForm()
+    
+    if form.validate_on_submit():
+        comment = Comment(
+            content=form.content.data,
+            user_id=current_user.id,
+            project_id=project_id
+        )
+        db.session.add(comment)
+        
+        # Create notification
+        if project.user != current_user:
+            create_notification(
+                project.user, 'comment', 
+                f'{current_user.display_name} comentou no seu projeto "{project.title}"',
+                related_user=current_user, project=project
+            )
+        
+        db.session.commit()
+        flash('Comentário adicionado!', 'success')
+    
+    return redirect(url_for('project_detail', id=project_id))
+
+# Follow/Unfollow functionality
+@app.route('/follow/<username>')
+@login_required
+def follow(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if user == current_user:
+        flash('Você não pode seguir a si mesmo!', 'warning')
+        return redirect(url_for('profile', username=username))
+    
+    current_user.follow(user)
+    db.session.commit()
+    
+    # Create notification
+    create_notification(
+        user, 'follow',
+        f'{current_user.display_name} começou a seguir você',
+        related_user=current_user
+    )
+    
+    flash(f'Agora você está seguindo {user.display_name}!', 'success')
+    return redirect(url_for('profile', username=username))
+
+@app.route('/unfollow/<username>')
+@login_required
+def unfollow(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if user == current_user:
+        flash('Você não pode deixar de seguir a si mesmo!', 'warning')
+        return redirect(url_for('profile', username=username))
+    
+    current_user.unfollow(user)
+    db.session.commit()
+    flash(f'Você não está mais seguindo {user.display_name}.', 'info')
+    return redirect(url_for('profile', username=username))
+
+# Notifications
+@app.route('/notifications')
+@login_required
+def notifications():
+    page = request.args.get('page', 1, type=int)
+    notifications = current_user.notifications.order_by(Notification.created_at.desc()).paginate(
+        page=page, per_page=20, error_out=False)
+    
+    # Mark all as read
+    current_user.notifications.filter_by(read=False).update({Notification.read: True})
+    db.session.commit()
+    
+    return render_template('notifications.html', notifications=notifications)
+
+# Feed
+@app.route('/feed')
+@login_required  
+def feed():
+    page = request.args.get('page', 1, type=int)
+    
+    # Get projects from followed users
+    followed_projects = Project.query.join(
+        User.followed, (User.followed.c.followed_id == Project.user_id)
+    ).filter(
+        User.followed.c.follower_id == current_user.id,
+        Project.is_published == True
+    ).order_by(Project.created_at.desc())
+    
+    # Include current user's projects
+    own_projects = current_user.projects.filter_by(is_published=True)
+    
+    # Combine and paginate
+    all_projects = followed_projects.union(own_projects).order_by(Project.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False)
+    
+    return render_template('feed.html', projects=all_projects)
+
+# Followers/Following pages
+@app.route('/followers/<username>')
+def followers(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    followers = User.query.join(
+        User.followed, (User.followed.c.follower_id == User.id)
+    ).filter(User.followed.c.followed_id == user.id).paginate(
+        page=page, per_page=20, error_out=False)
+    
+    return render_template('followers.html', user=user, users=followers)
+
+@app.route('/following/<username>')  
+def following(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    following = User.query.join(
+        User.followed, (User.followed.c.followed_id == User.id)
+    ).filter(User.followed.c.follower_id == user.id).paginate(
+        page=page, per_page=20, error_out=False)
+    
+    return render_template('following.html', user=user, users=following)
+
+# Project editing and deletion routes
 @app.route('/project/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_project(id):
     project = Project.query.get_or_404(id)
     
-    if project.author != current_user:
+    if project.user != current_user:
         abort(403)
     
     form = ProjectForm()
@@ -193,15 +350,21 @@ def edit_project(id):
         project.is_published = form.is_published.data
         
         if form.image.data:
-            picture_file = save_picture(form.image.data, 'project_images', (800, 600))
-            project.image = picture_file
+            try:
+                image_file = save_picture(form.image.data, 'projects', (800, 600))
+                project.image = image_file
+            except Exception as e:
+                flash('Erro ao fazer upload da imagem', 'danger')
         
         if form.video.data:
-            video_file = save_picture(form.video.data, 'project_videos')
-            project.video = video_file
+            try:
+                video_file = save_picture(form.video.data, 'videos')
+                project.video = video_file
+            except Exception as e:
+                flash('Erro ao fazer upload do vídeo', 'danger')
         
         db.session.commit()
-        flash('Your project has been updated!', 'success')
+        flash('Projeto atualizado com sucesso!', 'success')
         return redirect(url_for('project_detail', id=project.id))
     
     elif request.method == 'GET':
@@ -214,201 +377,25 @@ def edit_project(id):
         form.demo_link.data = project.demo_link
         form.is_published.data = project.is_published
     
-    return render_template('edit_project.html', form=form, project=project, legend='Edit Project')
+    return render_template('edit_project.html', form=form, project=project)
 
 @app.route('/project/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_project(id):
     project = Project.query.get_or_404(id)
     
-    if project.author != current_user:
+    if project.user != current_user:
         abort(403)
     
     db.session.delete(project)
     db.session.commit()
-    flash('Your project has been deleted!', 'success')
+    flash('Projeto excluído com sucesso!', 'success')
     return redirect(url_for('profile', username=current_user.username))
 
-@app.route('/like_project/<int:id>', methods=['POST'])
-@login_required
-def like_project(id):
-    project = Project.query.get_or_404(id)
-    
-    if not project.is_published:
-        abort(403)
-    
-    existing_like = Like.query.filter_by(user=current_user, project=project).first()
-    
-    if existing_like:
-        # Unlike
-        db.session.delete(existing_like)
-        liked = False
-    else:
-        # Like
-        like = Like()
-        like.user_id = current_user.id
-        like.project_id = project.id
-        db.session.add(like)
-        liked = True
-        
-        # Create notification for project author
-        if project.author != current_user:
-            message = f"{current_user.username} liked your project '{project.title}'"
-            create_notification(project.author, 'like', message, current_user, project)
-    
-    db.session.commit()
-    
-    return jsonify({
-        'liked': liked,
-        'like_count': project.get_like_count()
-    })
-
-@app.route('/add_comment/<int:id>', methods=['POST'])
-@login_required
-def add_comment(id):
-    project = Project.query.get_or_404(id)
-    
-    if not project.is_published:
-        abort(403)
-    
-    form = CommentForm()
-    if form.validate_on_submit():
-        comment = Comment()
-        comment.content = form.content.data
-        comment.user_id = current_user.id
-        comment.project_id = project.id
-        db.session.add(comment)
-        
-        # Create notification for project author
-        if project.author != current_user:
-            message = f"{current_user.username} commented on your project '{project.title}'"
-            create_notification(project.author, 'comment', message, current_user, project)
-        
-        db.session.commit()
-        flash('Your comment has been added!', 'success')
-    
-    return redirect(url_for('project_detail', id=id))
-
-@app.route('/follow/<username>')
-@login_required
-def follow(username):
-    user = User.query.filter_by(username=username).first()
-    if user is None:
-        flash(f'User {username} not found.', 'warning')
-        return redirect(url_for('index'))
-    
-    if user == current_user:
-        flash('You cannot follow yourself!', 'warning')
-        return redirect(url_for('profile', username=username))
-    
-    current_user.follow(user)
-    db.session.commit()
-    
-    # Create notification
-    message = f"{current_user.username} started following you"
-    create_notification(user, 'follow', message, current_user)
-    
-    flash(f'You are now following {username}!', 'success')
-    return redirect(url_for('profile', username=username))
-
-@app.route('/unfollow/<username>')
-@login_required
-def unfollow(username):
-    user = User.query.filter_by(username=username).first()
-    if user is None:
-        flash(f'User {username} not found.', 'warning')
-        return redirect(url_for('index'))
-    
-    if user == current_user:
-        flash('You cannot unfollow yourself!', 'warning')
-        return redirect(url_for('profile', username=username))
-    
-    current_user.unfollow(user)
-    db.session.commit()
-    flash(f'You are no longer following {username}.', 'info')
-    return redirect(url_for('profile', username=username))
-
-@app.route('/feed')
-@login_required
-def feed():
-    """Feed showing projects from followed users"""
-    page = request.args.get('page', 1, type=int)
-    
-    # Get projects from followed users
-    followed_users = current_user.followed.all()
-    followed_ids = [user.id for user in followed_users] + [current_user.id]
-    
-    projects = Project.query.filter(
-        Project.user_id.in_(followed_ids),
-        Project.is_published == True
-    ).order_by(Project.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False)
-    
-    return render_template('feed.html', projects=projects)
-
-@app.route('/notifications')
-@login_required
-def notifications():
-    """User notifications page"""
-    page = request.args.get('page', 1, type=int)
-    notifications = current_user.notifications.order_by(Notification.created_at.desc()).paginate(
-        page=page, per_page=20, error_out=False)
-    
-    # Mark all notifications as read
-    current_user.notifications.filter_by(read=False).update({'read': True})
-    db.session.commit()
-    
-    return render_template('notifications.html', notifications=notifications)
-
-@app.route('/following/<username>')
-def following(username):
-    """Show users that this user is following"""
-    user = User.query.filter_by(username=username).first_or_404()
-    page = request.args.get('page', 1, type=int)
-    following_users = user.followed.paginate(page=page, per_page=20, error_out=False)
-    
-    return render_template('following.html', user=user, following_users=following_users)
-
-@app.route('/followers/<username>')
-def followers(username):
-    """Show users that follow this user"""
-    user = User.query.filter_by(username=username).first_or_404()
-    page = request.args.get('page', 1, type=int)
-    followers_users = user.followers.paginate(page=page, per_page=20, error_out=False)
-    
-    return render_template('followers.html', user=user, followers_users=followers_users)
-
-@app.route('/search')
-def search():
-    """Search for projects and users"""
-    query = request.args.get('q', '')
-    page = request.args.get('page', 1, type=int)
-    
-    if query:
-        # Search projects
-        projects = Project.query.filter(
-            Project.is_published == True,
-            db.or_(
-                Project.title.contains(query),
-                Project.description.contains(query),
-                Project.tags.contains(query)
-            )
-        ).order_by(Project.created_at.desc()).paginate(
-            page=page, per_page=12, error_out=False)
-        
-        # Search users
-        users = User.query.filter(
-            db.or_(
-                User.username.contains(query),
-                User.first_name.contains(query),
-                User.last_name.contains(query)
-            )
-        ).limit(10).all()
-    else:
-        projects = None
-        users = []
-    
-    return render_template('search.html', projects=projects, users=users, query=query)
+# Configure upload folder
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 # Error handlers
 @app.errorhandler(403)

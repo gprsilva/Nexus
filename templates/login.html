@@ -3,51 +3,49 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
-        <div class="card auth-card">
-            <div class="card-body">
+        <div class="card">
+            <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <i class="fas fa-code fa-3x text-primary mb-3"></i>
-                    <h2 class="text-primary">Welcome Back</h2>
-                    <p class="text-muted">Sign in to your Nexus account</p>
+                    <i class="fas fa-rocket fa-3x text-gradient mb-3"></i>
+                    <h2 class="text-gradient">Entrar no Nexus</h2>
+                    <p class="text-muted">Acesse sua conta de desenvolvedor</p>
                 </div>
-                
+
                 <form method="POST">
                     {{ form.hidden_tag() }}
                     
                     <div class="mb-3">
                         {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                        {% if form.username.errors %}
-                            {% for error in form.username.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
+                        {{ form.username(class="form-control") }}
+                        {% for error in form.username.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                        {% if form.password.errors %}
-                            {% for error in form.password.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
+                        {{ form.password(class="form-control") }}
+                        {% for error in form.password.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    
+
                     <div class="mb-3 form-check">
                         {{ form.remember_me(class="form-check-input") }}
                         {{ form.remember_me.label(class="form-check-label") }}
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Entrar
                     </button>
                 </form>
-                
-                <div class="text-center">
+
+                <div class="text-center mt-4">
                     <p class="text-muted">
-                        Don't have an account? 
-                        <a href="{{ url_for('register') }}" class="text-decoration-none">Sign up here</a>
+                        Não tem uma conta? 
+                        <a href="{{ url_for('register') }}" class="text-decoration-none fw-medium">
+                            Cadastre-se aqui
+                        </a>
                     </p>
                 </div>
             </div>

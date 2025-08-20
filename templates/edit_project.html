@@ -1,1 +1,170 @@
-{% extends "create_project.html" %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-gradient mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Projeto
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form.title.label(class="form-label") }}
+                                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                {% for error in form.title.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.category.label(class="form-label") }}
+                                {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else "")) }}
+                                {% for error in form.category.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3") }}
+                        {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.content.label(class="form-label") }}
+                        {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="6") }}
+                        {% for error in form.content.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Descreva em detalhes seu projeto, tecnologias utilizadas, desafios enfrentados, etc.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.tags.label(class="form-label") }}
+                        {{ form.tags(class="form-control" + (" is-invalid" if form.tags.errors else ""), placeholder="JavaScript, React, Node.js, MongoDB") }}
+                        {% for error in form.tags.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Separe as tags com vírgulas</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.github_link.label(class="form-label") }}
+                                {{ form.github_link(class="form-control" + (" is-invalid" if form.github_link.errors else ""), placeholder="https://github.com/usuario/projeto") }}
+                                {% for error in form.github_link.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.demo_link.label(class="form-label") }}
+                                {{ form.demo_link(class="form-control" + (" is-invalid" if form.demo_link.errors else ""), placeholder="https://meuapp.com") }}
+                                {% for error in form.demo_link.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.image.label(class="form-label") }}
+                                {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else ""), id="imageInput") }}
+                                {% for error in form.image.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">Imagem principal do projeto (PNG, JPG - máx. 5MB)</div>
+                                {% if project.image %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Imagem atual:</small><br>
+                                    <img src="{{ url_for('uploaded_file', filename=project.image) }}" 
+                                         class="img-thumbnail mt-1" style="max-height: 100px;" alt="Imagem atual">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.video.label(class="form-label") }}
+                                {{ form.video(class="form-control" + (" is-invalid" if form.video.errors else ""), id="videoInput") }}
+                                {% for error in form.video.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">Vídeo demonstrativo (MP4 - máx. 50MB)</div>
+                                {% if project.video %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Vídeo atual: {{ project.video }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_published(class="form-check-input" + (" is-invalid" if form.is_published.errors else "")) }}
+                            {{ form.is_published.label(class="form-check-label") }}
+                            {% for error in form.is_published.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">Projetos publicados aparecem no seu perfil e no feed público</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Image preview
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Remove existing preview if any
+            const existingPreview = document.querySelector('.image-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
+            // Create preview
+            const preview = document.createElement('div');
+            preview.className = 'image-preview mt-2';
+            preview.innerHTML = `
+                <small class="text-muted">Pré-visualização:</small><br>
+                <img src="${e.target.result}" class="img-thumbnail mt-1" style="max-height: 150px;" alt="Preview">
+            `;
+            e.target.parentNode.appendChild(preview);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

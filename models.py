@@ -45,6 +45,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
+    @property
+    def display_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+    
     def get_full_name(self):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
@@ -140,5 +146,5 @@ class Notification(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))  # Optional, for project-related notifications
     
     # Relationships
-    related_user = db.relationship('User', foreign_keys=[related_user_id])
+    related_user = db.relationship('User', foreign_keys=[related_user_id], overlaps="trigger_user,triggered_notifications")
     project = db.relationship('Project', foreign_keys=[project_id])

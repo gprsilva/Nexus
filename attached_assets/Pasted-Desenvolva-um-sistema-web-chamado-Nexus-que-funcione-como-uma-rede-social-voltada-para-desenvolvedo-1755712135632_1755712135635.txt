@@ -1,0 +1,62 @@
+Desenvolva um sistema web chamado Nexus, que funcione como uma rede social voltada para desenvolvedores, permitindo que usuários publiquem, interajam e compartilhem projetos de forma profissional e colaborativa.
+
+Requisitos do Sistema
+🔹 Área Administrativa (Proprietário do Perfil/Desenvolvedor)
+
+Cadastrar, editar e excluir projetos ou conquistas.
+
+Upload de imagens, vídeos ou links de demonstração (GitHub, vídeos, protótipos).
+
+Organização por categorias, tecnologias ou tags.
+
+Escolher entre publicar imediatamente ou salvar como rascunho.
+
+🔹 Área Pública (Visitantes/Outros Desenvolvedores)
+
+Visualizar feed com os projetos e conquistas publicados.
+
+Curtir publicações (com contador de likes).
+
+Comentar nas publicações (somente usuários logados).
+
+Seguir outros desenvolvedores para acompanhar atualizações.
+
+Compartilhar projetos diretamente no LinkedIn, com prévia personalizada.
+
+🔹 Área de Autenticação
+
+Cadastro e login de usuários (nome, e-mail, senha, foto de perfil e bio curta).
+
+Recuperação de senha.
+
+Perfis de usuário com foto, informações básicas e lista de projetos publicados.
+
+🔹 Funcionalidades Extras
+
+Sistema de notificações (comentários, novos seguidores, curtidas).
+
+Seção Sobre Mim para apresentação pessoal do desenvolvedor.
+
+Página inicial destacando os projetos mais recentes ou mais curtidos.
+
+Design responsivo, adaptado para desktop e mobile.
+
+Requisitos de Layout e Design (UX/UI)
+
+Paleta de cores sofisticada, inspirada em tons profissionais (azul-escuro, cinza, branco, com detalhes em cores de destaque como roxo ou verde).
+
+Identidade visual única para o Nexus, consistente em todas as telas.
+
+Componentes modernos: botões arredondados, hovers suaves, cartões com sombras leves e espaçamento bem definido.
+
+Tipografia clara e profissional, com títulos destacados e textos legíveis.
+
+Feed em estilo grid/lista, com cards de projeto bem organizados.
+
+Perfis de usuário atrativos, exibindo foto, bio, tecnologias e projetos recentes.
+
+Animações sutis em transições (ex.: hover em botões, carregamento de cards).
+
+Menu de navegação fixo e intuitivo, permitindo fácil acesso ao feed, perfil, notificações e configurações.
+
+Dark mode opcional, mantendo a mesma coerência visual.

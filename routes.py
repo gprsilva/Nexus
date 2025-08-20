@@ -3,7 +3,7 @@ from flask import render_template, url_for, flash, redirect, request, abort, jso
 from flask_login import login_user, current_user, logout_user, login_required
 from urllib.parse import urlparse as url_parse
 from app import app, db
-from models import User, Project, Like, Comment, Notification
+from models import User, Project, Like, Comment, Notification, follows
 from forms import LoginForm, RegistrationForm, EditProfileForm, ProjectForm, CommentForm
 from utils import save_picture, create_notification, get_file_url
 
@@ -192,7 +192,9 @@ def toggle_like(project_id):
         db.session.delete(existing_like)
         liked = False
     else:
-        like = Like(user_id=current_user.id, project_id=project_id)
+        like = Like()
+        like.user_id = current_user.id
+        like.project_id = project_id
         db.session.add(like)
         liked = True
         # Create notification
@@ -214,11 +216,10 @@ def add_comment(project_id):
     form = CommentForm()
     
     if form.validate_on_submit():
-        comment = Comment(
-            content=form.content.data,
-            user_id=current_user.id,
-            project_id=project_id
-        )
+        comment = Comment()
+        comment.content = form.content.data
+        comment.user_id = current_user.id
+        comment.project_id = project_id
         db.session.add(comment)
         
         # Create notification
@@ -289,16 +290,16 @@ def notifications():
 def feed():
     page = request.args.get('page', 1, type=int)
     
-    # Get projects from followed users
+    # Get projects from followed users using the follows table directly
     followed_projects = Project.query.join(
-        User.followed, (User.followed.c.followed_id == Project.user_id)
+        follows, (follows.c.followed_id == Project.user_id)
     ).filter(
-        User.followed.c.follower_id == current_user.id,
+        follows.c.follower_id == current_user.id,
         Project.is_published == True
     ).order_by(Project.created_at.desc())
     
     # Include current user's projects
-    own_projects = current_user.projects.filter_by(is_published=True)
+    own_projects = Project.query.filter_by(user_id=current_user.id, is_published=True)
     
     # Combine and paginate
     all_projects = followed_projects.union(own_projects).order_by(Project.created_at.desc()).paginate(
@@ -312,8 +313,8 @@ def followers(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     followers = User.query.join(
-        User.followed, (User.followed.c.follower_id == User.id)
-    ).filter(User.followed.c.followed_id == user.id).paginate(
+        follows, (follows.c.follower_id == User.id)
+    ).filter(follows.c.followed_id == user.id).paginate(
         page=page, per_page=20, error_out=False)
     
     return render_template('followers.html', user=user, users=followers)
@@ -323,8 +324,8 @@ def following(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     following = User.query.join(
-        User.followed, (User.followed.c.followed_id == User.id)
-    ).filter(User.followed.c.follower_id == user.id).paginate(
+        follows, (follows.c.followed_id == User.id)
+    ).filter(follows.c.follower_id == user.id).paginate(
         page=page, per_page=20, error_out=False)
     
     return render_template('following.html', user=user, users=following)

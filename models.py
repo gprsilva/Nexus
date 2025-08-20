@@ -25,8 +25,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships
-    projects = db.relationship('Project', backref='author', lazy='dynamic', cascade='all, delete-orphan')
+    # Relationships (removed to avoid conflicts)
     likes = db.relationship('Like', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='author', lazy='dynamic', cascade='all, delete-orphan')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic', cascade='all, delete-orphan', foreign_keys='Notification.user_id')
@@ -74,7 +73,7 @@ class User(UserMixin, db.Model):
         return self.followed.count()
     
     def get_project_count(self):
-        return self.projects.filter_by(is_published=True).count()
+        return Project.query.filter_by(user_id=self.id, is_published=True).count()
     
     def get_unread_notification_count(self):
         return self.notifications.filter_by(read=False).count()
@@ -98,6 +97,7 @@ class Project(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     # Relationships
+    user = db.relationship('User', backref='projects_rel', lazy=True)
     likes = db.relationship('Like', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     
